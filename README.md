@@ -19,9 +19,17 @@ A console-based Library Management System built using:
 - removed_user.xlsx
 
 ## Screenshots
+
+### Login Menu
 ![Login Menu](screenshots/login_menu.png)
+
+### Overdue Confirmation
 ![Overdue Confirmation](screenshots/overdue_confirmation.png)
+
+### Fine Warning
 ![Fine Warning](screenshots/fine_warning.png)
+
+### Admin Statistics
 ![Admin Statistics](screenshots/admin_stats.png)
 
 ## How to Run
