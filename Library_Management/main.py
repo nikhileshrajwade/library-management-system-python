@@ -29,18 +29,11 @@ def save_data():
     A_ID_All = np.array(admin["Admin_ID"]).astype(int)
     A_Pass_All = np.array(admin["Admin_Pass"])
     ex_user = removed_user["User_ID"].dropna().astype(int).values
-
-
 #---- No change needed variables ----
 User_ID = None
-
 #---- Total attempt for login ---- 
 user_attempt = 3
 admin_attempt = 3
-
-
-
-
 # +++++ USER FINE +++++
 def user_fine():
     user["Issue_Date_1"] = pd.to_datetime(user["Issue_Date_1"], dayfirst=True).dt.normalize()
