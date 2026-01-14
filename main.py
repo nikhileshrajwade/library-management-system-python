@@ -67,32 +67,20 @@ def user_overdue():
     save_data()
     save_user()
     save_removed_user()
+
+def user_book_data():
+    rows = []
+    for i in range(1, 4):
+        bid = user.loc[user_index, f"Book_ID_{i}"]
+        bid = int(bid) if pd.notna(bid) else "NULL"
+        rows.append([
+            bid,
+            user.loc[user_index, f"Book_Name_{i}"],
+            user.loc[user_index, f"Issue_Date_{i}"]
+        ])
+    df = pd.DataFrame(rows, columns=["Book ID", "Book Name", "Issue Date"])
+    print(df.to_string(index=False))
     
-def show_data_user():
-    books, days, fines = [], [], []
-    today = pd.Timestamp.today().normalize()
-
-    for i in range(3):
-        bn = f"Book_Name_{i+1}"
-        bd = f"Issue_Date_{i+1}"
-        if not pd.isna(user.loc[user_index, bn]):
-            d = (today - user.loc[user_index, bd]).days
-            books.append(user.loc[user_index, bn])
-            days.append(d)
-            fines.append((d - 14) * 2 if d > 14 else 0)
-
-    if len(books) > 0:
-        plt.figure(figsize=(15,5))
-        plt.bar(books, days)
-        plt.title("Books vs Days Issued")
-        plt.show()
-
-        plt.figure(figsize=(15,5))
-        plt.bar(books, fines)
-        plt.title("Books vs Fine")
-        plt.show()
-    else:
-        print("No books issued")
 
 def book_issue():
     b_ID = input("""If want to Issue Book by name then press enter.
@@ -152,80 +140,34 @@ def book_issue():
     print("!!! Maximum Limit Reached !!!")
 
 def book_reissue():
-    b_ID = input("""If want to Re-Issue Book by name then press enter.
-        Else enter the Book_ID:  """)
-    if b_ID=="":
-        book_name = input("Enter book name: (You can enter related word)--: ")
-        sim_book=np.array([])
-        sim_index=np.array([])
-        cnt=0
-        n=0
-        for i in range(len(Book_Name_All)):
-            if book_name.lower() in Book_Name_All[i].lower():
-                sim_book= np.append(sim_book, Book_Name_All[i])
-                sim_index = np.append(sim_index, i)
-                n = n+1
-                print(f"{n}. {Book_Name_All[i]}")
-        
-        if len(sim_book)==0:
-            print("--Book not found--")
-        else:
-            temp_index= int(input("Enter the serial number: "))
-            if temp_index < 1 or temp_index > len(sim_index):
-                print("Invalid selection")
-                return
-            b_name = sim_book[temp_index-1]
+    b_ID = int(input("Enter the Book_ID:  "))
+    if b_ID in Book_ID:
+        idx = np.where(Book_ID == b_ID)[0]
+        b_index = idx[0]
+        b_name = library.loc[b_index,"Book_Name"]  
     else:
-        b_ID = int(b_ID)
-        if b_ID in Book_ID:
-            idx = np.where(Book_ID == b_ID)[0]
-            b_index = idx[0]
-            b_name = library.loc[b_index,"Book_Name"]  
-        else:
-            print("--- Book not found ---")
-        for i in range(3):
-            str_name = f"Book_Name_{i+1}"
-            str_date = f"Issue_Date_{i+1}"
-            if (b_name==user.loc[user_index, str_name]):
-                user.loc[user_index, str_date] = pd.Timestamp.today().normalize()
-                print("--- Book Re-Issued ---")
-                save_data()
-                save_user()
-                return
-        print("---Book Not Issued.---")
+        print("--- Book not found ---")
+    for i in range(3):
+        str_name = f"Book_Name_{i+1}"
+        str_date = f"Issue_Date_{i+1}"
+        if (b_name==user.loc[user_index, str_name]):
+            user.loc[user_index, str_date] = pd.Timestamp.today().normalize()
+            print("--- Book Re-Issued ---")
+            save_data()
+            save_user()
+            print("---Updated Issued Books---".center(40))
+            print(" ")
+            user_book_data()
+            return
+    print("---Book Not Issued.---")
 
 def book_return():
-    b_ID = input("""If want to Return Book by name then press enter.
-        Else enter the Book_ID:  """)
-    if b_ID=="":
-        book_name = input("Enter book name: (You can enter related word)--: ")
-        sim_book=np.array([])
-        sim_index=np.array([])
-        n=0
-        for i in range(len(Book_Name_All)):
-            if book_name.lower() in Book_Name_All[i].lower():
-                sim_book= np.append(sim_book, Book_Name_All[i])
-                sim_index = np.append(sim_index, i)
-                n = n+1
-                print(f"{n}. {Book_Name_All[i]}")
-        
-        if len(sim_book)==0:
-            print("--Book not found--")
-        else:
-            temp_index= int(input("Enter the serial number: "))
-            if temp_index < 1 or temp_index > len(sim_index):
-                print("Invalid selection")
-                return
-            b_index = int(sim_index[temp_index-1])
-            b_ID = Book_ID[b_index]
-
+    b_ID = int(input("Enter the Book_ID:  "))
+    if b_ID in Book_ID:
+        idx = np.where(Book_ID == b_ID)[0]
+        b_index = idx[0]
     else:
-        b_ID = int(b_ID)
-        if b_ID in Book_ID:
-            idx = np.where(Book_ID == b_ID)[0]
-            b_index = idx[0]
-        else:
-            print("--- Book not found ---")
+        print("--- Book not found ---")
     for i in range(3):
         bn = f"Book_Name_{i+1}"
         bid = f"Book_ID_{i+1}"
@@ -236,59 +178,61 @@ def book_return():
             user.loc[user_index, bd] = pd.NaT
             library.loc[b_index, "Copies"] += 1
             library.loc[b_index, "Status"] = "Available"
-            print("--- Book Returned ---")
+            print("--- Book Returned Successfully ---")
             save_data()
             save_user()
             save_library()
+            print("--- Updated Issued Books ---".center(40))
+            print(" ")
+            user_book_data()
             return
     print("--- Book Not Issued ---")
 
 # +++++ USER +++++
 def login_user():
     global user_index 
+    save_data()
     user_index = np.where(U_ID_All == User_ID)[0][0]
+    print("---My Issued Books---".center(40))
+    print(" ")
+    user_book_data()
 
     while True:
         try:
             task = int(input('''Enter your choice:
     
-    1. Show my data visually
-    2. Issue a book
-    3. Reissue a book
-    4. Return a book
-    5. Check fine
-    6. Exit
+    1. Issue a book
+    2. Reissue a book
+    3. Return a book
+    4. Check fine
+    5. Exit
     
     Enter choice: '''))
     
-        # +++++ TASK 1 - USER VISUAL DATA +++++
+            # +++++ TASK 1 - ISSUE BOOK +++++
             if task == 1:
-                show_data_user()
-        
-            # +++++ TASK 2 - ISSUE BOOK +++++
-            elif task == 2:
                book_issue()
         
-            # +++++ TASK 3 - REISSUE BOOK +++++
-            elif task == 3:
+            # +++++ TASK 2 - REISSUE BOOK +++++
+            elif task == 2:
                 book_reissue()
                     
         
-            # +++++ TASK 4 - RETURN BOOK +++++
-            elif task == 4:
+            # +++++ TASK 3 - RETURN BOOK +++++
+            elif task == 3:
                 book_return()
                 
         
-            # +++++ TASK 5 - CHECK FINE +++++
-            elif task == 5:
+            # +++++ TASK 4 - CHECK FINE +++++
+            elif task == 4:
                 user_fine()
                 print("Total Fine ₹", user.loc[user_index, "Fine"])
                 if user.loc[user_index, "Fine"] >= 250:
                     print("\033[31m!!! WARNING !!!\033[0m")
                     print("YOUR ACCOUNT MAY BE SUSPENDED IF FINE REACHES ₹500. PAY IT 'ASAP")
             
-            # +++++ TASK 6 - EXIT +++++
-            elif task == 6:
+            # +++++ TASK 5 - EXIT +++++
+            elif task == 5:
                 print("---- THANK YOU ----")
                 break
             
@@ -392,43 +336,36 @@ def lib_status():
     avail_r = (library["Copies"]).sum()
     issued_r = total_r - avail_r
     fine_r = user["Fine"].sum()
-    
     print("Total Books by count:", total_r)
     print("Total Books Available by count:", avail_r)
     print("Total Books Issued by Count:", issued_r)
     
-    fig, ((ax1, ax2), (ay1, ay2)) = plt.subplots(2, 2, figsize=(12, 10))
+    fig, ((ax1, ax2), (ay1, ay2)) = plt.subplots(2, 2, figsize=(14, 10))
     
-    plt.subplots_adjust(wspace=0.6, hspace=0.4)
+    plt.subplots_adjust(wspace=1, hspace=0.4)
     
     ax1.pie([avail, issued], labels=["Available", "Issued"], autopct="%1.1f%%")
     ax1.set_title("""Available Books to Issue Books RATIO 
         By Availability""")
     
-    ax2.bar(["Available", "Issued"],[avail, issued])
-    ax2.set_title("Availability")
-    ax2.set_xlabel("STATUS")
-    ax2.set_ylabel("No. Of Books")
-    
-    total_r = ((user["Book_ID_1"].notna()).sum()+
-              (user["Book_ID_2"].notna()).sum()+
-              (user["Book_ID_3"].notna()).sum()+
-              (library["Copies"]).sum()
-             )
-            
-    avail_r = (library["Copies"]).sum()
-    issued_r = total_r - avail_r
-    fine_r = user["Fine"].sum()
+    ax2.barh(library["Category"].value_counts().index, library["Category"].value_counts().values)
+    ax2.set_title("Books Count By Genre")
+    ax2.set_xlabel("Number of Books")
+    ax2.set_ylabel("Genre")
+    ax2.invert_yaxis()
     
     ay1.pie([avail_r, issued_r], labels=["Available", "Issued"], autopct="%1.1f%%")
     ay1.set_title('''Available Books by Issue Books RATIO
          By Count''')
     
-    ay2.bar(["Available", "Issued"],[avail_r, issued_r])
-    ay2.set_title("Availability By Count")
-    ay2.set_xlabel("STATUS")
-    ay2.set_ylabel("Total Count Of Books")
-
+    top_10 = library.sort_values(by = "Price", ascending = False).head(10)
+    
+    ay2.barh(top_10["Book_Name"], top_10["Price"])
+    ay2.set_title("Top 10 expensive Books")
+    ay2.set_xlabel("Price")
+    ay2.set_ylabel("Books")
+    ay2.invert_yaxis()
+    plt.savefig("lib_data.png")
     plt.show()
 
     if (~np.isnan(temp)).sum() == 0:
@@ -442,6 +379,11 @@ def lib_status():
             pass
     return login_admin()
 
+
+def lib_books():
+    print(library[["Book_ID","Book_Name","Author","Copies"]].to_string(index=False))
+    return #login_admin()
+
 # +++++ ADMIN +++++
 def login_admin():
     global user, library, Book_ID
@@ -453,7 +395,8 @@ def login_admin():
 3. Insert or update book
 4. Delete book
 5. Library statistics
-6. Exit
+6. Library Books
+7. Exit
 
 Enter choice: '''))
         
@@ -472,8 +415,11 @@ Enter choice: '''))
         # +++++ TASK 5 - LIBRARY STATUS +++++
         elif task == 5:
             lib_status()
-        # +++++ TASK 6 - EXIT ++++++
+        # +++++ TASK 6 - LIBRARY STATUS +++++
         elif task == 6:
+            lib_books()
+        # +++++ TASK 7 - EXIT ++++++
+        elif task == 7:
             print("---- THANK YOU ----")
             return 
         else:
@@ -486,6 +432,7 @@ Enter choice: '''))
 #---- Taking user ID ----
 def userID():
     global user_attempt
+    save_data()
     if user_attempt == 0:
         return   
     try:
@@ -497,6 +444,7 @@ def userID():
         elif User_ID in U_ID_All:
             pwd = int(input("Password: "))
             if pwd == U_Pass_All[np.where(U_ID_All == User_ID)[0][0]]:
+                print("------")
                 login_user()
             else:
                 print("!!! Password Not Matched !!!")
